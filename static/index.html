@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT 登录示例</title>
+</head>
+<body>
+    <h1>JWT 登录示例</h1>
+    <button id="login-button">登录</button>
+    <button id="view-protected-button">查看受保护内容</button> <!-- 添加查看按钮 -->
+    
+    <!-- 添加文本框用于显示 JSON 数据 -->
+    <pre id="output" style="border: 1px solid #ccc; padding: 10px; margin-top: 10px; background-color: #f9f9f9;"></pre>
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        async function login() {
+            alert("正在登录")
+            const response = await axios.post('http://localhost:8080/login', {
+                username: 'testuser',
+                password: 'password'
+            });
+            sessionStorage.setItem('jwtToken', response.data.token); // 将 token 存储在 sessionStorage
+            console.log("登录成功，JWT Token: ", response.data.token);
+        }
+
+        async function accessProtectedRoute() {
+            alert("请求受保护内容")
+            const token = sessionStorage.getItem('jwtToken'); // 获取存储的 JWT Token
+            if (token) {
+                const response = await axios.get('http://localhost:8080/protected', {
+                    headers: {
+                        'Authorization': `Bearer ${token}` // 发送 Bearer Token
+                    }
+                });
+
+                console.log("受保护的内容: ", response.data);
+                document.getElementById('output').textContent = JSON.stringify(response.data, null, 2); // 显示 JSON 数据
+            } else {
+                console.log("请先登录以获取 Token");
+                document.getElementById('output').textContent = "请先登录以获取 Token"; // 显示提示信息
+            }
+        }
+
+        // 绑定登录按钮的点击事件
+        document.getElementById('login-button').addEventListener('click', login);
+
+        // 绑定查看受保护内容按钮的点击事件
+        document.getElementById('view-protected-button').addEventListener('click', accessProtectedRoute);
+
+        // 页面加载时获取 token
+        window.onload = async () => {
+            const token = sessionStorage.getItem('jwtToken'); // 从 sessionStorage 获取 token
+            if (token) {
+                console.log("从 sessionStorage 获取的 JWT Token: ", token);
+            }
+        };
+    </script>
+</body>
+</html>
